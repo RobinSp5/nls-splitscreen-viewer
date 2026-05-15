@@ -1,13 +1,19 @@
 # NLS Splitscreen Viewer
 
-Single-File Webanwendung, die bereits bestehende offizielle Ressourcen rund um die ADAC RAVENOL Nuerburgring Langstrecken-Serie (NLS) und das 24h Rennen Nuerburgring in einer Ansicht buendelt - die offiziellen YouTube-Streams (Hauptkamera, Onboards, Pit Lane) und das offizielle Live Timing.
+## 👉 **[OPEN THE VIEWER HERE - NO INSTALL NEEDED](https://robinsp5.github.io/nls-splitscreen-viewer/)** 👈
+
+Just click the link above and start watching. Nothing to download, nothing to set up.
+
+---
+
+Watch the official YouTube streams of the ADAC RAVENOL Nuerburgring Langstrecken-Serie (NLS) and the 24h Nuerburgring all in one view - main feed, onboard cameras and pit lane side by side, with the official live timing right next to them.
 
 ## Features
 
-- **Splitscreens in verschiedenen Ausrichtungen**: z.B. 2x2, 1x4, 4x1 oder 1+3 / 1+4 / 1+5 / 1+6 (ein grosser Hauptstream + mehrere kleine Onboards)
-- **Optionale Live Rangliste** vom offiziellen Live Timing
-- **Optionale Live Messages** (Race Control / Flaggen / Strafen) vom offiziellen Live Timing
+- **Splitscreens in different layouts**: e.g. 2x2, 1x4, 4x1 or 1+3 / 1+4 / 1+5 / 1+6 (one big main stream plus several small onboards)
+- **Optional live leaderboard** from the official live timing
+- **Optional live messages** (race control / flags / penalties) from the official live timing
 
 ## Disclaimer
 
-Dieses Projekt ist ein **Community-Projekt** und steht in **keinerlei Verbindung** zum ADAC, der NLS, dem 24h Rennen Nuerburgring, deren Veranstaltern, Teams oder Streaming-Partnern. Alle YouTube-Streams und Live-Timing-Daten werden direkt von den offiziellen oeffentlichen Quellen geladen. Es werden keine eigenen Inhalte erzeugt, keine Daten gespeichert und nichts weitergeleitet.
+This is a **community project** and is **not affiliated** with the ADAC, the NLS, the 24h Nuerburgring, their organizers, teams or streaming partners. All YouTube streams and live timing data are loaded directly from the official public sources. No content is created, no data is stored, nothing is forwarded.
