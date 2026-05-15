@@ -194,6 +194,14 @@
       grid-template-rows: 1fr;
       grid-template-areas: "c0 c1 c2 c3";
     }
+    .grid.layout-3x3 {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      grid-template-areas:
+        "c0 c1 c2"
+        "c3 c4 c5"
+        "c6 c7 c8";
+    }
     /* 1+N layouts: main stream on top (full width), sub-streams full-width strip below.
        Sub-streams are wrapped in .bottom-row which is itself a grid. */
     .grid.layout-1plus3,
@@ -229,6 +237,14 @@
     .grid.layout-4x1.has-panels {
       grid-template-columns: var(--panel-w) repeat(4, 1fr) var(--panel-w);
       grid-template-areas: "pL c0 c1 c2 c3 pR";
+    }
+    /* 3x3 */
+    .grid.layout-3x3.has-panels {
+      grid-template-columns: var(--panel-w) repeat(3, 1fr) var(--panel-w);
+      grid-template-areas:
+        "pL c0 c1 c2 pR"
+        "pL c3 c4 c5 pR"
+        "pL c6 c7 c8 pR";
     }
     /* 1+N with panels: sub-streams (.bottom-row) span FULL width below.
        Panels and main stream share the top row. */
@@ -285,6 +301,8 @@
     .grid > .cell[data-area="c4"] { grid-area: c4; }
     .grid > .cell[data-area="c5"] { grid-area: c5; }
     .grid > .cell[data-area="c6"] { grid-area: c6; }
+    .grid > .cell[data-area="c7"] { grid-area: c7; }
+    .grid > .cell[data-area="c8"] { grid-area: c8; }
 
     .cell-header {
       display: flex;
@@ -827,9 +845,6 @@
 
 <header>
   <div class="logo">
-    <div class="logo-icon">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-    </div>
     <span>Splitscreen Viewer</span>
   </div>
   <div class="controls">
@@ -837,6 +852,7 @@
       <button class="active" data-layout="2x2">2x2</button>
       <button data-layout="1x4">1x4</button>
       <button data-layout="4x1">4x1</button>
+      <button data-layout="3x3">3x3</button>
       <button data-layout="1plus3">1+3</button>
       <button data-layout="1plus4">1+4</button>
       <button data-layout="1plus5">1+5</button>
@@ -942,6 +958,7 @@
     'layout-2x2':    { cells: 4 },
     'layout-1x4':    { cells: 4 },
     'layout-4x1':    { cells: 4 },
+    'layout-3x3':    { cells: 9 },
     'layout-1plus3': { cells: 4 },
     'layout-1plus4': { cells: 5 },
     'layout-1plus5': { cells: 6 },
