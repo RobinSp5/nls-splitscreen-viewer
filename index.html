@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Splitscreen Viewer</title>
+  <style>
+    :root {
+      --bg-0: #0a0a0c;
+      --bg-1: #131318;
+      --bg-2: #1c1c24;
+      --bg-3: #262630;
+      --border: #2a2a36;
+      --text-1: #f1f1f5;
+      --text-2: #b8b8c4;
+      --text-3: #7a7a88;
+      --accent: #ff3355;
+      --accent-hover: #ff4d6b;
+      --accent-soft: rgba(255, 51, 85, 0.15);
+      --success: #22c55e;
+      --panel-w: 280px;
+      --panel-msg-w: 280px;
+      --header-h: 56px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-0);
+      color: var(--text-1);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      height: var(--header-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-1) 70%, var(--bg-0) 100%);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 50;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: -1px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+      opacity: 0.4;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--accent), #ff7755);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(255, 51, 85, 0.4);
+    }
+
+    .logo-icon svg {
+      width: 14px;
+      height: 14px;
+      margin-left: 2px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0;
+      background: var(--bg-2);
+      border-radius: 7px;
+      padding: 2px;
+    }
+
+    .btn-group button {
+      background: transparent;
+      border: none;
+      color: var(--text-2);
+      padding: 5px 11px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+
+    .btn-group button:hover {
+      color: var(--text-1);
+      background: var(--bg-3);
+    }
+
+    .btn-group button.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(255, 51, 85, 0.3);
+    }
+
+    .btn {
+      background: var(--bg-2);
+      color: var(--text-2);
+      border: 1px solid transparent;
+      padding: 7px 13px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: var(--bg-3);
+      color: var(--text-1);
+    }
+
+    .btn.active,
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(255, 51, 85, 0.3);
+    }
+
+    .btn.primary:hover,
+    .btn.active:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      margin: 0 6px;
+    }
+
+    .grid {
+      flex: 1;
+      display: grid;
+      gap: 4px;
+      background: var(--bg-0);
+      padding: 4px;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    /* Base layouts */
+    .grid.layout-2x2 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      grid-template-areas:
+        "c0 c1"
+        "c2 c3";
+    }
+    .grid.layout-1x4 {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, 1fr);
+      grid-template-areas: "c0" "c1" "c2" "c3";
+    }
+    .grid.layout-4x1 {
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: 1fr;
+      grid-template-areas: "c0 c1 c2 c3";
+    }
+    .grid.layout-1plus3 {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: 1fr auto;
+      grid-template-areas:
+        "c0 c0 c0"
+        "c1 c2 c3";
+    }
+    .grid.layout-1plus4 {
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: 1fr auto;
+      grid-template-areas:
+        "c0 c0 c0 c0"
+        "c1 c2 c3 c4";
+    }
+    .grid.layout-1plus5 {
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: 1fr auto;
+      grid-template-areas:
+        "c0 c0 c0 c0 c0"
+        "c1 c2 c3 c4 c5";
+    }
+    .grid.layout-1plus6 {
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: 1fr auto;
+      grid-template-areas:
+        "c0 c0 c0 c0 c0 c0"
+        "c1 c2 c3 c4 c5 c6";
+    }
+
+    /* Layouts with panels active - 2x2 */
+    .grid.layout-2x2.has-panels {
+      grid-template-columns: var(--panel-w) 1fr 1fr var(--panel-w);
+      grid-template-areas:
+        "pL c0 c1 pR"
+        "pL c2 c3 pR";
+    }
+    /* 1x4 */
+    .grid.layout-1x4.has-panels {
+      grid-template-columns: var(--panel-w) 1fr var(--panel-w);
+      grid-template-areas:
+        "pL c0 pR"
+        "pL c1 pR"
+        "pL c2 pR"
+        "pL c3 pR";
+    }
+    /* 4x1 */
+    .grid.layout-4x1.has-panels {
+      grid-template-columns: var(--panel-w) repeat(4, 1fr) var(--panel-w);
+      grid-template-areas: "pL c0 c1 c2 c3 pR";
+    }
+    /* 1+3 with panels - panels next to main only */
+    .grid.layout-1plus3.has-panels {
+      grid-template-columns: var(--panel-w) repeat(3, 1fr) var(--panel-w);
+      grid-template-areas:
+        "pL c0 c0 c0 pR"
+        ".  c1 c2 c3 .";
+    }
+    /* 1+4 */
+    .grid.layout-1plus4.has-panels {
+      grid-template-columns: var(--panel-w) repeat(4, 1fr) var(--panel-w);
+      grid-template-areas:
+        "pL c0 c0 c0 c0 pR"
+        ".  c1 c2 c3 c4 .";
+    }
+    /* 1+5 */
+    .grid.layout-1plus5.has-panels {
+      grid-template-columns: var(--panel-w) repeat(5, 1fr) var(--panel-w);
+      grid-template-areas:
+        "pL c0 c0 c0 c0 c0 pR"
+        ".  c1 c2 c3 c4 c5 .";
+    }
+    /* 1+6 */
+    .grid.layout-1plus6.has-panels {
+      grid-template-columns: var(--panel-w) repeat(6, 1fr) var(--panel-w);
+      grid-template-areas:
+        "pL c0 c0 c0 c0 c0 c0 pR"
+        ".  c1 c2 c3 c4 c5 c6 .";
+    }
+
+    /* 1+N sub-cells maintain 16:9 only when no panels (auto row) */
+    .grid[class*="layout-1plus"]:not(.has-panels) .cell[data-area^="c"]:not([data-area="c0"]) {
+      aspect-ratio: 16 / 9;
+    }
+    .grid[class*="layout-1plus"].has-panels .cell[data-area^="c"]:not([data-area="c0"]) {
+      aspect-ratio: 16 / 9;
+    }
+
+    .cell {
+      position: relative;
+      background: var(--bg-1);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    /* Map data-area to grid-area */
+    .cell[data-area="c0"] { grid-area: c0; }
+    .cell[data-area="c1"] { grid-area: c1; }
+    .cell[data-area="c2"] { grid-area: c2; }
+    .cell[data-area="c3"] { grid-area: c3; }
+    .cell[data-area="c4"] { grid-area: c4; }
+    .cell[data-area="c5"] { grid-area: c5; }
+    .cell[data-area="c6"] { grid-area: c6; }
+
+    .cell-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .cell-number {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: var(--bg-3);
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .cell-header select,
+    .cell-header input {
+      flex: 1;
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      color: var(--text-1);
+      padding: 5px 9px;
+      border-radius: 5px;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+      min-width: 0;
+    }
+
+    .cell-header select {
+      cursor: pointer;
+    }
+
+    .cell-header select:focus,
+    .cell-header input:focus {
+      border-color: var(--accent);
+    }
+
+    .cell-header input::placeholder {
+      color: var(--text-3);
+    }
+
+    .cell-header .btn-load {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 5px 11px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .cell-header .btn-load:hover {
+      background: var(--accent-hover);
+    }
+
+    .cell-header .btn-clear {
+      background: var(--bg-3);
+      color: var(--text-3);
+      border: none;
+      padding: 5px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.15s;
+    }
+
+    .cell-header .btn-clear:hover {
+      background: var(--bg-3);
+      color: var(--text-1);
+    }
+
+    .video-container {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+      background: #000;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .placeholder {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      gap: 12px;
+    }
+
+    .placeholder svg {
+      width: 44px;
+      height: 44px;
+      opacity: 0.25;
+    }
+
+    .placeholder span {
+      font-size: 13px;
+      letter-spacing: 0.3px;
+      opacity: 0.7;
+    }
+
+    /* ---- Side panels ---- */
+    .panel {
+      background: var(--bg-1);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      min-height: 0;
+    }
+
+    .panel-left { grid-area: pL; }
+    .panel-right { grid-area: pR; }
+
+    .grid:not(.has-panels) .panel { display: none; }
+
+    .panel-header {
+      padding: 10px 14px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .panel-body {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+      overflow-y: auto;
+      background: var(--bg-1);
+      scrollbar-width: thin;
+      scrollbar-color: var(--bg-3) transparent;
+    }
+
+    .panel-body::-webkit-scrollbar { width: 6px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 3px; }
+
+    .panel-status {
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .panel-status.connected { color: var(--success); }
+    .panel-status.error { color: var(--accent); }
+
+    .panel-empty {
+      padding: 20px;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    /* ---- Leaderboard table ---- */
+    .lb-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .lb-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--bg-2);
+    }
+
+    .lb-table th {
+      padding: 7px 4px;
+      text-align: left;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-3);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-2);
+    }
+
+    .lb-table th.num,
+    .lb-table th.time { text-align: right; }
+
+    .lb-table td {
+      padding: 5px 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .lb-table tbody tr:hover td { background: rgba(255,255,255,0.025); }
+
+    .lb-table td.pos {
+      width: 24px;
+      text-align: center;
+      color: var(--text-3);
+      font-weight: 600;
+    }
+
+    .lb-table td.stnr {
+      width: 28px;
+      text-align: center;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+
+    .lb-table td.name {
+      color: var(--text-1);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100px;
+    }
+
+    .lb-table td.time {
+      text-align: right;
+      color: var(--text-2);
+      font-feature-settings: 'tnum';
+    }
+
+    .lb-table td.gap {
+      text-align: right;
+      color: var(--text-3);
+      width: 50px;
+    }
+
+    /* Color codes for lap timing (LLTS / FLTS) */
+    .t-best { color: #c084fc !important; font-weight: 600; }   /* purple = overall fastest */
+    .t-pb   { color: #4ade80 !important; }                      /* green = personal best */
+    .t-imp  { color: #fbbf24 !important; }                      /* yellow = improvement */
+    .t-pit  { color: var(--text-3) !important; font-style: italic; }
+
+    .pos-1 td.pos { color: #ffd700; }
+    .pos-2 td.pos { color: #c0c0c0; }
+    .pos-3 td.pos { color: #cd7f32; }
+
+    .class-badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      background: var(--bg-3);
+      color: var(--text-2);
+    }
+
+    .pro-badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      background: rgba(96, 165, 250, 0.15);
+      color: #60a5fa;
+    }
+
+    .proam-badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+    }
+
+    /* Column toggles in settings */
+    .col-toggles {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .col-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-2);
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .col-toggle:hover {
+      border-color: var(--bg-3);
+      color: var(--text-1);
+    }
+
+    .col-toggle input {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .col-toggle.checked {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--text-1);
+    }
+
+    /* ---- Messages list ---- */
+    .msg-list {
+      padding: 4px 0;
+    }
+
+    .msg-item {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 12px;
+      line-height: 1.4;
+      animation: msgIn 0.4s ease;
+    }
+
+    @keyframes msgIn {
+      from { background: var(--accent-soft); }
+      to { background: transparent; }
+    }
+
+    .msg-time {
+      font-size: 10px;
+      color: var(--text-3);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.3px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .msg-text {
+      color: var(--text-1);
+    }
+
+    .msg-text .car-num {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* ---- Fullscreen ---- */
+    body.fullscreen header {
+      display: none !important;
+    }
+
+    body.fullscreen .cell-header {
+      display: none !important;
+    }
+
+    body.fullscreen .placeholder {
+      display: none !important;
+    }
+
+    body.fullscreen .grid {
+      gap: 2px;
+      padding: 0;
+    }
+
+    body.fullscreen .cell,
+    body.fullscreen .panel {
+      border-radius: 0;
+      border: none;
+    }
+
+    body.fullscreen .panel-header {
+      padding: 6px 12px;
+      font-size: 10px;
+    }
+
+    /* ---- Modal ---- */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(5, 5, 8, 0.72);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 26px;
+      width: 90%;
+      max-width: 540px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    }
+
+    .modal h2 {
+      font-size: 16px;
+      margin-bottom: 4px;
+      color: var(--text-1);
+      letter-spacing: -0.2px;
+    }
+
+    .modal .subtitle {
+      font-size: 13px;
+      color: var(--text-3);
+      margin-bottom: 22px;
+    }
+
+    .modal-row {
+      margin-bottom: 16px;
+    }
+
+    .modal-row label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .modal-row input {
+      width: 100%;
+      background: var(--bg-0);
+      border: 1px solid var(--border);
+      color: var(--text-1);
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .modal-row input:focus {
+      border-color: var(--accent);
+    }
+
+    .modal-row .hint {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 5px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .modal-actions button {
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--bg-2);
+      color: var(--text-2);
+      transition: all 0.15s;
+    }
+
+    .modal-actions button:hover {
+      background: var(--bg-3);
+      color: var(--text-1);
+    }
+
+    .modal-actions button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .modal-actions button.primary:hover {
+      background: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <span>Splitscreen Viewer</span>
+  </div>
+  <div class="controls">
+    <div class="btn-group">
+      <button class="active" data-layout="2x2">2x2</button>
+      <button data-layout="1x4">1x4</button>
+      <button data-layout="4x1">4x1</button>
+      <button data-layout="1plus3">1+3</button>
+      <button data-layout="1plus4">1+4</button>
+      <button data-layout="1plus5">1+5</button>
+      <button data-layout="1plus6">1+6</button>
+    </div>
+    <div class="divider"></div>
+    <button class="btn" onclick="allStreams('play')" title="Alle starten">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button class="btn" onclick="allStreams('pause')" title="Alle pausieren">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+    </button>
+    <button class="btn" onclick="allStreams('reload')" title="Alle neu laden">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-8 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18a6 6 0 110-12c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    </button>
+    <div class="divider"></div>
+    <button class="btn" id="btn-live-timing" onclick="toggleLiveTiming()">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10zM7 9h10v2H7V9zm0 4h7v2H7v-2z"/></svg>
+      Live Timing
+    </button>
+    <button class="btn" onclick="openSettings()" title="Einstellungen">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94 0 .31.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    </button>
+    <div class="divider"></div>
+    <button class="btn" id="btn-fullscreen" onclick="toggleFullscreen()">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+      Fullscreen
+    </button>
+  </div>
+</header>
+
+<div class="grid layout-2x2" id="grid">
+  <aside class="panel panel-left" id="panel-left">
+    <div class="panel-header">
+      <span class="panel-title" id="lb-title">Leaderboard</span>
+      <span class="panel-status" id="lb-status">offline</span>
+    </div>
+    <div class="panel-body" id="lb-body">
+      <div class="panel-empty">Verbinde...</div>
+    </div>
+  </aside>
+  <aside class="panel panel-right" id="panel-right">
+    <div class="panel-header">
+      <span class="panel-title">Messages</span>
+      <span class="panel-status" id="msg-status">offline</span>
+    </div>
+    <div class="panel-body" id="msg-body">
+      <div class="panel-empty">Verbinde...</div>
+    </div>
+  </aside>
+</div>
+
+<div class="modal-backdrop" id="settings-modal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h2>Einstellungen</h2>
+    <div class="subtitle">Live Timing Quellen konfigurieren</div>
+    <div class="modal-row">
+      <label>Event ID</label>
+      <input type="number" id="setting-event-id" placeholder="50">
+      <div class="hint">Die Event ID des aktuellen Live Timing Streams (Standard: 50).</div>
+    </div>
+    <div class="modal-row">
+      <label>Leaderboard Spalten</label>
+      <div class="col-toggles" id="col-toggles"></div>
+      <div class="hint">Auswaehlen welche Spalten angezeigt werden.</div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeSettings()">Abbrechen</button>
+      <button class="primary" onclick="saveSettings()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const grid = document.getElementById('grid');
+  const layoutButtons = document.querySelectorAll('.btn-group button[data-layout]');
+
+  const presets = [
+    { label: '24h-Rennen (Main)', url: 'https://www.youtube.com/watch?v=oFBUkzV0vFs' },
+    { label: 'Pit Lane', url: 'https://www.youtube.com/watch?v=OZdE2ZOAXfo' },
+    { label: 'Top Q & Qualifying 3', url: 'https://www.youtube.com/watch?v=HjXqEQ8wuqU' },
+    { label: 'Top Qualifying Draw', url: 'https://www.youtube.com/watch?v=9jdP5UzQnLg' },
+    { label: 'Qualifying 1 & 2', url: 'https://www.youtube.com/watch?v=T0gejxud6-4' },
+    { label: 'Onboard #1 BMW ROWE Racing', url: 'https://www.youtube.com/watch?v=X2Icmd1PXOU' },
+    { label: 'Onboard #3 Mercedes-AMG Verstappen', url: 'https://www.youtube.com/watch?v=Keqjx5zqeDE' },
+    { label: 'Onboard #16 Scherer Sport PHX', url: 'https://www.youtube.com/watch?v=xiw4y2W71wA' },
+    { label: 'Onboard #17 Dunlop Motorsport', url: 'https://www.youtube.com/watch?v=2OYU8wKPkDU' },
+    { label: 'Onboard #36 Saugmotoren 3M', url: 'https://www.youtube.com/watch?v=s_pjGCAZDbM' },
+    { label: 'Onboard #44 Falken Motorsports', url: 'https://www.youtube.com/watch?v=vkYfgV7nSZA' },
+    { label: 'Onboard #50 Max Kruse Racing', url: 'https://www.youtube.com/watch?v=Sny-FQ0KNzY' },
+    { label: 'Onboard #67 HRT Ford Racing', url: 'https://www.youtube.com/watch?v=chfYT_QM59k' },
+    { label: 'Onboard #80 Mercedes-AMG RAVENOL', url: 'https://www.youtube.com/watch?v=diS_9fO2uQE' },
+    { label: 'Onboard #81 BMW M Motorsport', url: 'https://www.youtube.com/watch?v=Uzy9dqrP9o8' },
+    { label: 'Onboard #88 Subaru Tecnica', url: 'https://www.youtube.com/watch?v=rlKlNPaonyU' },
+    { label: 'Onboard #109 TOYOTA Rookie Racing', url: 'https://www.youtube.com/watch?v=MvRN_NmNDfE' },
+    { label: 'Onboard #632 BLACK FALCON FANATEC', url: 'https://www.youtube.com/watch?v=uuTNqqRaQCE' },
+    { label: 'Onboard #830 Hyundai Motorsport N', url: 'https://www.youtube.com/watch?v=6P2nm5bvzKk' },
+    { label: 'Onboard #911 Manthey', url: 'https://www.youtube.com/watch?v=uofChxeVADU' },
+    { label: 'Onboard #992 Manthey eFuel Griesemann', url: 'https://www.youtube.com/watch?v=7oNyOWDrsXw' },
+  ];
+
+  const layoutMap = {
+    'layout-2x2':    { cells: 4 },
+    'layout-1x4':    { cells: 4 },
+    'layout-4x1':    { cells: 4 },
+    'layout-1plus3': { cells: 4 },
+    'layout-1plus4': { cells: 5 },
+    'layout-1plus5': { cells: 6 },
+    'layout-1plus6': { cells: 7 },
+  };
+
+  function extractVideoId(input) {
+    input = input.trim();
+    let match = input.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+    if (match) return match[1];
+    match = input.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+    if (match) return match[1];
+    match = input.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
+    if (match) return match[1];
+    match = input.match(/youtube\.com\/live\/([a-zA-Z0-9_-]{11})/);
+    if (match) return match[1];
+    if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+    return null;
+  }
+
+  function createCell(index) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.area = 'c' + index;
+    const options = presets.map(p => `<option value="${p.url}">${p.label}</option>`).join('');
+    cell.innerHTML = `
+      <div class="cell-header">
+        <span class="cell-number">${index + 1}</span>
+        <select id="select-${index}" onchange="onPresetChange(${index})">
+          <option value="">Stream waehlen...</option>
+          ${options}
+          <option value="custom">Eigene URL...</option>
+        </select>
+        <input type="text" placeholder="YouTube URL einfuegen..." id="input-${index}" style="display:none;">
+        <button class="btn-load" onclick="loadVideo(${index})">Laden</button>
+        <button class="btn-clear" onclick="clearVideo(${index})">&#10005;</button>
+      </div>
+      <div class="video-container" id="container-${index}">
+        <div class="placeholder" id="placeholder-${index}">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/></svg>
+          <span>Stream ${index + 1}</span>
+        </div>
+      </div>
+    `;
+    return cell;
+  }
+
+  function getCellsContainer() {
+    return grid;
+  }
+
+  function buildCells(count) {
+    const currentStates = [];
+    const existingCells = grid.querySelectorAll('.cell');
+    existingCells.forEach((_, i) => {
+      const select = document.getElementById(`select-${i}`);
+      const input = document.getElementById(`input-${i}`);
+      if (select) {
+        currentStates.push({ selectVal: select.value, inputVal: input ? input.value : '' });
+      }
+    });
+
+    grid.querySelectorAll('.cell').forEach(c => c.remove());
+    for (let i = 0; i < count; i++) {
+      grid.appendChild(createCell(i));
+    }
+
+    currentStates.forEach((s, i) => {
+      if (i >= count) return;
+      const select = document.getElementById(`select-${i}`);
+      const input = document.getElementById(`input-${i}`);
+      if (select && s.selectVal) {
+        select.value = s.selectVal;
+        if (s.selectVal === 'custom') {
+          input.style.display = '';
+          input.value = s.inputVal;
+        }
+        if (s.selectVal && s.selectVal !== 'custom') loadVideo(i);
+        else if (s.selectVal === 'custom' && s.inputVal) loadVideo(i);
+      }
+    });
+  }
+
+  function init() {
+    buildCells(4);
+    loadState();
+    loadPanelState();
+  }
+
+  function onPresetChange(index) {
+    const select = document.getElementById(`select-${index}`);
+    const input = document.getElementById(`input-${index}`);
+    if (select.value === 'custom') {
+      input.style.display = '';
+      input.focus();
+    } else {
+      input.style.display = 'none';
+      input.value = '';
+      if (select.value) loadVideo(index);
+    }
+  }
+
+  function getVideoUrl(index) {
+    const select = document.getElementById(`select-${index}`);
+    const input = document.getElementById(`input-${index}`);
+    if (!select) return '';
+    return select.value === 'custom' ? input.value : select.value;
+  }
+
+  function loadVideo(index) {
+    const url = getVideoUrl(index);
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+      const input = document.getElementById(`input-${index}`);
+      if (input) {
+        input.style.borderColor = 'var(--accent)';
+        setTimeout(() => input.style.borderColor = '', 1500);
+      }
+      return;
+    }
+    const container = document.getElementById(`container-${index}`);
+    const placeholder = document.getElementById(`placeholder-${index}`);
+    if (placeholder) placeholder.style.display = 'none';
+
+    let iframe = container.querySelector('iframe');
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      container.appendChild(iframe);
+    }
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&enablejsapi=1`;
+    saveState();
+  }
+
+  function clearVideo(index) {
+    const container = document.getElementById(`container-${index}`);
+    const iframe = container.querySelector('iframe');
+    if (iframe) iframe.remove();
+    const placeholder = document.getElementById(`placeholder-${index}`);
+    if (placeholder) placeholder.style.display = '';
+    const select = document.getElementById(`select-${index}`);
+    const input = document.getElementById(`input-${index}`);
+    if (select) select.value = '';
+    if (input) { input.value = ''; input.style.display = 'none'; }
+    saveState();
+  }
+
+  function saveState() {
+    const state = [];
+    const count = grid.querySelectorAll('.cell').length;
+    for (let i = 0; i < count; i++) {
+      state.push(getVideoUrl(i));
+    }
+    const layout = getCurrentLayout();
+    localStorage.setItem('splitscreen', JSON.stringify({ state, layout }));
+  }
+
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('splitscreen'));
+      if (!saved) return;
+      if (saved.layout) {
+        // Preserve has-panels class
+        const hadPanels = grid.classList.contains('has-panels');
+        grid.className = `grid ${saved.layout}`;
+        if (hadPanels) grid.classList.add('has-panels');
+        layoutButtons.forEach(b => {
+          b.classList.toggle('active', `layout-${b.dataset.layout}` === saved.layout);
+        });
+        const cellCount = layoutMap[saved.layout] ? layoutMap[saved.layout].cells : 4;
+        buildCells(cellCount);
+      }
+      if (saved.state) {
+        saved.state.forEach((val, i) => {
+          if (!val) return;
+          const select = document.getElementById(`select-${i}`);
+          const input = document.getElementById(`input-${i}`);
+          if (!select) return;
+          const isPreset = presets.some(p => p.url === val);
+          if (isPreset) {
+            select.value = val;
+          } else {
+            select.value = 'custom';
+            input.style.display = '';
+            input.value = val;
+          }
+          loadVideo(i);
+        });
+      }
+    } catch {}
+  }
+
+  function allStreams(action) {
+    const iframes = grid.querySelectorAll('.video-container iframe');
+    iframes.forEach(iframe => {
+      if (action === 'reload') {
+        iframe.src = iframe.src;
+      } else if (action === 'pause') {
+        iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      } else if (action === 'play') {
+        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+      }
+    });
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  // ---- Live Timing Panels (native WebSocket integration) ----
+  const DEFAULT_EVENT_ID = 50;
+  const WS_HOST = 'wss://livetiming.azurewebsites.net';
+
+  function getPanelSettings() {
+    try {
+      return JSON.parse(localStorage.getItem('panelSettings')) || {};
+    } catch { return {}; }
+  }
+
+  function getEventId() {
+    return getPanelSettings().eventId || DEFAULT_EVENT_ID;
+  }
+
+  // -- WebSocket connection management
+  const ltConnections = { results: null, messages: null };
+  let ltState = { results: 'offline', messages: 'offline' };
+
+  function setStatus(channel, state) {
+    ltState[channel] = state;
+    const el = document.getElementById(channel === 'results' ? 'lb-status' : 'msg-status');
+    if (!el) return;
+    el.textContent = state;
+    el.className = 'panel-status ' + (state === 'live' ? 'connected' : (state === 'error' ? 'error' : ''));
+  }
+
+  function ltConnect(channel, pids, onJson) {
+    ltDisconnect(channel);
+    const eventId = getEventId();
+    setStatus(channel, 'verbinde');
+    const ws = new WebSocket(WS_HOST);
+    let timeSynced = false;
+    let firstData = false;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ eventId, eventPid: pids, clientLocalTime: Date.now() }));
+    };
+    ws.onmessage = (e) => {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch { return; }
+      if (msg.PID === 'LTS_TIMESYNC') { timeSynced = true; return; }
+      if (!firstData) { firstData = true; setStatus(channel, 'live'); }
+      onJson(msg);
+    };
+    ws.onerror = () => setStatus(channel, 'error');
+    ws.onclose = () => {
+      if (ltConnections[channel] === ws) {
+        setStatus(channel, 'getrennt');
+        // Auto-reconnect after a delay if panels still active
+        setTimeout(() => {
+          if (ltConnections[channel] === ws && grid.classList.contains('has-panels')) {
+            ltConnect(channel, pids, onJson);
+          }
+        }, 3000);
+      }
+    };
+    ltConnections[channel] = ws;
+  }
+
+  function ltDisconnect(channel) {
+    const ws = ltConnections[channel];
+    if (ws) {
+      ltConnections[channel] = null;
+      try { ws.close(); } catch {}
+    }
+    setStatus(channel, 'offline');
+  }
+
+  // -- Renderers
+  const lbBody = () => document.getElementById('lb-body');
+  const msgBody = () => document.getElementById('msg-body');
+  const lbTitle = () => document.getElementById('lb-title');
+
+  let lastResults = [];
+  let lastMessages = [];
+
+  function timeClass(status) {
+    // LLTS / FLTS: 2 = overall fastest, 3 = personal best
+    if (status === '2' || status === 2) return 't-best';
+    if (status === '3' || status === 3) return 't-pb';
+    if (status === '1' || status === 1) return 't-imp';
+    return '';
+  }
+
+  // Leaderboard column definitions
+  const LB_COLUMNS = [
+    { id: 'pos',     label: 'P',       header: 'P',       defaultOn: true,
+      render: r => `<td class="pos">${r.POSITION || ''}</td>` },
+    { id: 'stnr',    label: 'Nummer',  header: '#',       defaultOn: true,
+      render: r => `<td class="stnr">${r.STNR || ''}</td>` },
+    { id: 'name',    label: 'Fahrer',  header: 'Fahrer',  defaultOn: true,
+      render: r => `<td class="name" title="${escapeHtml((r.NAME||'') + ' - ' + (r.TEAM||''))}">${escapeHtml(r.NAME || '')}</td>` },
+    { id: 'team',    label: 'Team',    header: 'Team',    defaultOn: false,
+      render: r => `<td class="name" title="${escapeHtml(r.TEAM||'')}">${escapeHtml(r.TEAM || '')}</td>` },
+    { id: 'car',     label: 'Auto',    header: 'Auto',    defaultOn: false,
+      render: r => `<td class="name" title="${escapeHtml(r.CAR||'')}">${escapeHtml(r.CAR || '')}</td>` },
+    { id: 'class',   label: 'Klasse',  header: 'Kl.',     defaultOn: false,
+      render: r => `<td><span class="class-badge">${escapeHtml(r.CLASSNAME || '')}</span></td>` },
+    { id: 'pro',     label: 'Rang',    header: 'Rang',    defaultOn: false,
+      render: r => {
+        if (r.PRO === 'PRO') return `<td><span class="pro-badge">PRO</span></td>`;
+        if (r.PRO === 'PROAM' || r.PRO === 'AM') return `<td><span class="proam-badge">${escapeHtml(r.PRO)}</span></td>`;
+        return `<td>${escapeHtml(r.PRO || '')}</td>`;
+      } },
+    { id: 'laps',    label: 'Runden',  header: 'Rd',      defaultOn: false,
+      render: r => `<td class="gap">${r.LAPS || ''}</td>` },
+    { id: 'last',    label: 'Letzte',  header: 'Letzte',  defaultOn: true,
+      render: r => {
+        const isPit = r.LASTLAPTIME === 'PIT' || r.S9TIME === 'PIT';
+        const lastTime = r.LASTLAPTIME && r.LASTLAPTIME !== 'PIT' ? r.LASTLAPTIME : '';
+        const cls = isPit ? 't-pit' : timeClass(r.LLTS);
+        return `<td class="time ${cls}">${isPit ? 'PIT' : escapeHtml(lastTime)}</td>`;
+      } },
+    { id: 'best',    label: 'Beste',   header: 'Beste',   defaultOn: false,
+      render: r => `<td class="time ${timeClass(r.FLTS)}">${escapeHtml(r.FASTESTLAP || '')}</td>` },
+    { id: 'gap',     label: 'Gap',     header: 'Gap',     defaultOn: true,
+      render: r => `<td class="gap">${escapeHtml(r.GAP || '')}</td>` },
+    { id: 'pits',    label: 'Pitstops',header: 'Pit',     defaultOn: false,
+      render: r => `<td class="gap">${r.PITSTOPCOUNT || ''}</td>` },
+  ];
+
+  function getActiveColumns() {
+    const s = getPanelSettings();
+    if (s.columns && Array.isArray(s.columns)) {
+      return LB_COLUMNS.filter(c => s.columns.includes(c.id));
+    }
+    return LB_COLUMNS.filter(c => c.defaultOn);
+  }
+
+  function renderLeaderboard(data) {
+    if (data.TRACKNAME) {
+      lbTitle().textContent = data.TRACKNAME;
+    }
+    if (!data.RESULT) return;
+    lastResults = data.RESULT;
+    renderLeaderboardRows();
+  }
+
+  function renderLeaderboardRows() {
+    const cols = getActiveColumns();
+    if (cols.length === 0) {
+      lbBody().innerHTML = '<div class="panel-empty">Keine Spalten ausgewaehlt</div>';
+      return;
+    }
+    const headerCells = cols.map(c => {
+      const cls = (c.id === 'gap' || c.id === 'laps' || c.id === 'pits') ? 'num'
+                : (c.id === 'last' || c.id === 'best') ? 'time'
+                : '';
+      return `<th class="${cls}">${escapeHtml(c.header)}</th>`;
+    }).join('');
+    const rows = lastResults.map(r => {
+      const posCls = `pos-${r.POSITION}`;
+      return `<tr class="${posCls}">${cols.map(c => c.render(r)).join('')}</tr>`;
+    }).join('');
+    lbBody().innerHTML = `
+      <table class="lb-table">
+        <thead><tr>${headerCells}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function renderMessages(data) {
+    if (!data.MESSAGES) return;
+    lastMessages = data.MESSAGES;
+    // Newest first (data already has newest at end usually, but ID can guide)
+    const sorted = [...lastMessages].sort((a, b) => parseInt(b.ID) - parseInt(a.ID));
+    if (sorted.length === 0) {
+      msgBody().innerHTML = '<div class="panel-empty">Keine Nachrichten</div>';
+      return;
+    }
+    const items = sorted.map(m => {
+      const text = escapeHtml(m.MESSAGE || '').replace(/#\s*(\d+)/g, '<span class="car-num">#$1</span>');
+      return `<div class="msg-item">
+        <span class="msg-time">${escapeHtml(m.MESSAGETIME || '')}</span>
+        <span class="msg-text">${text}</span>
+      </div>`;
+    }).join('');
+    msgBody().innerHTML = `<div class="msg-list">${items}</div>`;
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function toggleLiveTiming() {
+    const active = grid.classList.toggle('has-panels');
+    document.getElementById('btn-live-timing').classList.toggle('active', active);
+    if (active) {
+      ltConnect('results', [0, 4], renderLeaderboard);
+      ltConnect('messages', [3], renderMessages);
+    } else {
+      ltDisconnect('results');
+      ltDisconnect('messages');
+    }
+    savePanelState();
+  }
+
+  function savePanelState() {
+    const state = {
+      active: grid.classList.contains('has-panels'),
+    };
+    localStorage.setItem('panelState', JSON.stringify(state));
+  }
+
+  function loadPanelState() {
+    try {
+      const s = JSON.parse(localStorage.getItem('panelState')) || {};
+      if (s.active) toggleLiveTiming();
+    } catch {}
+  }
+
+  function openSettings() {
+    const s = getPanelSettings();
+    document.getElementById('setting-event-id').value = s.eventId || '';
+    // Build column toggles
+    const active = new Set(getActiveColumns().map(c => c.id));
+    const togglesHtml = LB_COLUMNS.map(c => {
+      const isOn = active.has(c.id);
+      return `<label class="col-toggle ${isOn ? 'checked' : ''}" data-col="${c.id}">
+        <input type="checkbox" ${isOn ? 'checked' : ''} onchange="this.closest('.col-toggle').classList.toggle('checked', this.checked)">
+        <span>${escapeHtml(c.label)}</span>
+      </label>`;
+    }).join('');
+    document.getElementById('col-toggles').innerHTML = togglesHtml;
+    document.getElementById('settings-modal').classList.add('active');
+  }
+
+  function closeSettings() {
+    document.getElementById('settings-modal').classList.remove('active');
+  }
+
+  function saveSettings() {
+    const eventId = document.getElementById('setting-event-id').value.trim();
+    const prev = getPanelSettings();
+    const s = {};
+    if (eventId) s.eventId = parseInt(eventId, 10);
+    // Read column toggles
+    const cols = [];
+    document.querySelectorAll('#col-toggles .col-toggle').forEach(el => {
+      const input = el.querySelector('input');
+      if (input && input.checked) cols.push(el.dataset.col);
+    });
+    s.columns = cols;
+    localStorage.setItem('panelSettings', JSON.stringify(s));
+    // Reconnect with new event ID if changed
+    if (grid.classList.contains('has-panels')) {
+      if (prev.eventId !== s.eventId) {
+        ltConnect('results', [0, 4], renderLeaderboard);
+        ltConnect('messages', [3], renderMessages);
+      } else {
+        // Just re-render with new columns
+        renderLeaderboardRows();
+      }
+    }
+    closeSettings();
+  }
+
+  function getCurrentLayout() {
+    for (const cls of grid.classList) {
+      if (layoutMap[cls]) return cls;
+    }
+    return 'layout-2x2';
+  }
+
+  document.addEventListener('fullscreenchange', () => {
+    const isFs = !!document.fullscreenElement;
+    document.body.classList.toggle('fullscreen', isFs);
+  });
+
+  // Layout switching
+  layoutButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      layoutButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const layoutKey = `layout-${btn.dataset.layout}`;
+      const cellCount = layoutMap[layoutKey] ? layoutMap[layoutKey].cells : 4;
+      const hadPanels = grid.classList.contains('has-panels');
+      grid.className = `grid ${layoutKey}`;
+      if (hadPanels) grid.classList.add('has-panels');
+      buildCells(cellCount);
+      saveState();
+    });
+  });
+
+  // Enter to load + ESC to close modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('.cell-header input')) {
+      const index = parseInt(e.target.id.split('-')[1]);
+      loadVideo(index);
+    }
+    if (e.key === 'Escape' && document.getElementById('settings-modal').classList.contains('active')) {
+      closeSettings();
+    }
+  });
+
+  init();
+</script>
+
+</body>
+</html>
