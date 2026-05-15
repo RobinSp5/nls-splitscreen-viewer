@@ -276,14 +276,15 @@
       border: 1px solid var(--border);
     }
 
-    /* Map data-area to grid-area */
-    .cell[data-area="c0"] { grid-area: c0; }
-    .cell[data-area="c1"] { grid-area: c1; }
-    .cell[data-area="c2"] { grid-area: c2; }
-    .cell[data-area="c3"] { grid-area: c3; }
-    .cell[data-area="c4"] { grid-area: c4; }
-    .cell[data-area="c5"] { grid-area: c5; }
-    .cell[data-area="c6"] { grid-area: c6; }
+    /* Map data-area to grid-area, but ONLY for direct children of .grid.
+       Cells inside .bottom-row use auto-placement within that sub-grid. */
+    .grid > .cell[data-area="c0"] { grid-area: c0; }
+    .grid > .cell[data-area="c1"] { grid-area: c1; }
+    .grid > .cell[data-area="c2"] { grid-area: c2; }
+    .grid > .cell[data-area="c3"] { grid-area: c3; }
+    .grid > .cell[data-area="c4"] { grid-area: c4; }
+    .grid > .cell[data-area="c5"] { grid-area: c5; }
+    .grid > .cell[data-area="c6"] { grid-area: c6; }
 
     .cell-header {
       display: flex;
