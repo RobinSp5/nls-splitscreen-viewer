@@ -1351,10 +1351,13 @@
   function renderMessages(data) {
     if (!data.MESSAGES) return;
     lastMessages = data.MESSAGES;
-    // Newest first (data already has newest at end usually, but ID can guide)
-    const sorted = [...lastMessages].sort((a, b) => parseInt(b.ID) - parseInt(a.ID));
+    const body = msgBody();
+    // Auto-scroll only if user is already near the top — don't yank them away from older messages they're reading.
+    const stickToTop = body.scrollTop < 40;
+    // Server liefert älteste zuerst — umdrehen, damit neueste oben stehen.
+    const sorted = [...lastMessages].reverse();
     if (sorted.length === 0) {
-      msgBody().innerHTML = '<div class="panel-empty">Keine Nachrichten</div>';
+      body.innerHTML = '<div class="panel-empty">Keine Nachrichten</div>';
       return;
     }
     const items = sorted.map(m => {
@@ -1364,7 +1367,8 @@
         <span class="msg-text">${text}</span>
       </div>`;
     }).join('');
-    msgBody().innerHTML = `<div class="msg-list">${items}</div>`;
+    body.innerHTML = `<div class="msg-list">${items}</div>`;
+    if (stickToTop) body.scrollTop = 0;
   }
 
   function escapeHtml(s) {
