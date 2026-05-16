@@ -1354,8 +1354,14 @@
     const body = msgBody();
     // Auto-scroll only if user is already near the top — don't yank them away from older messages they're reading.
     const stickToTop = body.scrollTop < 40;
-    // Server liefert älteste zuerst — umdrehen, damit neueste oben stehen.
-    const sorted = [...lastMessages].reverse();
+    // Sort by MESSAGETIME descending so the newest is always on top, regardless of server order.
+    // ID is a tiebreaker for messages with the same timestamp.
+    const sorted = [...lastMessages].sort((a, b) => {
+      const at = String(a.MESSAGETIME || '');
+      const bt = String(b.MESSAGETIME || '');
+      if (at !== bt) return bt.localeCompare(at);
+      return (parseInt(b.ID) || 0) - (parseInt(a.ID) || 0);
+    });
     if (sorted.length === 0) {
       body.innerHTML = '<div class="panel-empty">Keine Nachrichten</div>';
       return;
